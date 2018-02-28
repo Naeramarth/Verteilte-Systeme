@@ -49,12 +49,12 @@ class Anzeige implements Serializable {
     @ManyToOne
     private Benutzer benutzer;
 
-    @ManyToMany(mappedBy = "anzeigen")
+    @ManyToMany
     private List<Benutzer> list_benutzer;
     
     @OneToMany(mappedBy = "anzeige")
     private List<Foto> fotos;
     
-    @ManyToMany(mappedBy = "anzeigen")
+    @ManyToMany
     private List<Kategorie> kategorien;
 }

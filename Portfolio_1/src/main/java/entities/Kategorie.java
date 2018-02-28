@@ -32,9 +32,7 @@ class Kategorie {
     @ManyToMany(mappedBy = "kategorien")
     private List<Anzeige> anzeigen;
     
-    @OneToMany(mappedBy = "kategorie")
+    @OneToMany
     private List<Kategorie> kategorien;
-    @ManyToOne
-    private Kategorie kategorie;
     
 }
