@@ -10,5 +10,15 @@ package entities;
  * @author FSche
  */
 public enum ArtDesPreises {
-    FP, VHB
+    FESTPREIS, VERHANDLUNGSBASIS;
+    public String getLabel() {
+        switch (this) {
+            case FESTPREIS:
+                return "Festpreis";
+            case VERHANDLUNGSBASIS:
+                return "Verhandlungsbasis";
+            default:
+                return this.toString();
+        }
+    }
 }

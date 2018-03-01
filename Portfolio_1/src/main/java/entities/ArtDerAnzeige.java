@@ -10,5 +10,15 @@ package entities;
  * @author FSche
  */
 public enum ArtDerAnzeige {
-    ANGEBOT, GESUCH
+    BIETE, SUCHE;
+    public String getLabel() {
+        switch (this) {
+            case BIETE:
+                return "Biete";
+            case SUCHE:
+                return "Suche";
+            default:
+                return this.toString();
+        }
+    }
 }

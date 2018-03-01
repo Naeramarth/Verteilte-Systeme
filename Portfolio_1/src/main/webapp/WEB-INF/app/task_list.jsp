@@ -24,11 +24,15 @@
 
     <jsp:attribute name="menu">
         <div class="menuitem">
-            <a href="<c:url value="/app/task/new/"/>">Aufgabe anlegen</a>
+            <a href="<c:url value="/app/task/new/"/>">Angebot anlegen</a>
         </div>
 
         <div class="menuitem">
             <a href="<c:url value="/app/categories/"/>">Kategorien bearbeiten</a>
+        </div>
+
+        <div class="menuitem">
+            <a href="<c:url value="/app/edit_user/"/>">Benutzer bearbeiten</a>
         </div>
     </jsp:attribute>
 
@@ -70,37 +74,44 @@
                 </p>
             </c:when>
             <c:otherwise>
-                <jsp:useBean id="utils" class="dhbwka.wwi.vertsys.javaee.jtodo.web.WebUtils"/>
+                <jsp:useBean id="utils" class="web.WebUtils"/>
                 
                 <table>
                     <thead>
                         <tr>
                             <th>Bezeichnung</th>
                             <th>Kategorie</th>
-                            <th>Eigentümer</th>
-                            <th>Status</th>
-                            <th>Fällig am</th>
+                            <th>Benutzer</th>
+                            <th>Angebotstyp</th>
+                            <th>Preis</th>
+                            <th>Preistyp</th>
+                            <th>Datum</th>
                         </tr>
                     </thead>
                     <c:forEach items="${tasks}" var="task">
                         <tr>
                             <td>
                                 <a href="<c:url value="/app/task/${task.id}/"/>">
-                                    <c:out value="${task.shortText}"/>
+                                    <c:out value="${task.titel}"/>
                                 </a>
                             </td>
                             <td>
-                                <c:out value="${task.category.name}"/>
+                                <c:out value="${task.kategorie.name}"/>
                             </td>
                             <td>
-                                <c:out value="${task.owner.username}"/>
+                                <c:out value="${task.benutzer.benutzername}"/>
                             </td>
                             <td>
-                                <c:out value="${task.status.label}"/>
+                                <c:out value="${task.art}"/>
                             </td>
                             <td>
-                                <c:out value="${utils.formatDate(task.dueDate)}"/>
-                                <c:out value="${utils.formatTime(task.dueTime)}"/>
+                                <c:out value="${task.preisvorstellung}"/>
+                            </td>
+                            <td>
+                                <c:out value="${task.artDesPreises}"/>
+                            </td>
+                            <td>
+                                <c:out value="${task.einstellungsdatum}"/>
                             </td>
                         </tr>
                     </c:forEach>

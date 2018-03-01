@@ -9,11 +9,11 @@
  */
 package web;
 
-import beans.CategoryBean;
-import beans.TaskBean;
+import beans.AnzeigeBean;
+import beans.KategorieBean;
 import beans.ValidationBean;
-import entities.Category;
-import entities.Task;
+import entities.Anzeige;
+import entities.Kategorie;
 import java.io.IOException;
 import java.util.List;
 import javax.ejb.EJB;
@@ -34,10 +34,10 @@ import javax.servlet.http.HttpSession;
 public class CategoryListServlet extends HttpServlet {
 
     @EJB
-    CategoryBean categoryBean;
+    KategorieBean categoryBean;
     
     @EJB
-    TaskBean taskBean;
+    AnzeigeBean taskBean;
 
     @EJB
     ValidationBean validationBean;
@@ -95,7 +95,7 @@ public class CategoryListServlet extends HttpServlet {
         // Formulareingaben prüfen
         String name = request.getParameter("name");
 
-        Category category = new Category(name);
+        Kategorie category = new Kategorie(name);
         List<String> errors = this.validationBean.validate(category);
 
         // Neue Kategorie anlegen
@@ -137,26 +137,26 @@ public class CategoryListServlet extends HttpServlet {
         // Kategorien löschen
         for (String categoryId : categoryIds) {
             // Zu löschende Kategorie ermitteln
-            Category category;
+            Kategorie kategorie;
 
             try {
-                category = this.categoryBean.findById(Long.parseLong(categoryId));
+                kategorie = this.categoryBean.findById(Long.parseLong(categoryId));
             } catch (NumberFormatException ex) {
                 continue;
             }
             
-            if (category == null) {
+            if (kategorie == null) {
                 continue;
             }
             
             // Bei allen betroffenen Aufgaben, den Bezug zur Kategorie aufheben
-            category.getTasks().forEach((Task task) -> {
-                task.setCategory(null);
-                this.taskBean.update(task);
+            kategorie.getAnzeigen().forEach((Anzeige anzeige) -> {
+                anzeige.setKategorie(null);
+                this.taskBean.update(anzeige);
             });
             
             // Und weg damit
-            this.categoryBean.delete(category);
+            this.categoryBean.delete(kategorie);
         }
         
         // Browser auffordern, die Seite neuzuladen

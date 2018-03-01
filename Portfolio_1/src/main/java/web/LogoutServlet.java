@@ -37,6 +37,7 @@ public class LogoutServlet extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response)
     throws IOException, ServletException {
         request.getSession().invalidate();
+        request.logout();
         response.sendRedirect(WebUtils.appUrl(request, "/"));
     }
 

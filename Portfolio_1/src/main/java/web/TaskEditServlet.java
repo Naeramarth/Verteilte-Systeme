@@ -9,12 +9,13 @@
  */
 package web;
 
-import beans.CategoryBean;
-import beans.TaskBean;
-import beans.UserBean;
+import beans.AnzeigeBean;
+import beans.BenutzerBean;
+import beans.KategorieBean;
 import beans.ValidationBean;
-import entities.Task;
-import entities.TaskStatus;
+import entities.Anzeige;
+import entities.ArtDerAnzeige;
+import entities.ArtDesPreises;
 import java.io.IOException;
 import java.sql.Date;
 import java.sql.Time;
@@ -37,13 +38,13 @@ import javax.servlet.http.HttpSession;
 public class TaskEditServlet extends HttpServlet {
 
     @EJB
-    TaskBean taskBean;
+    AnzeigeBean anzeigeBean;
 
     @EJB
-    CategoryBean categoryBean;
+    KategorieBean categoryBean;
 
     @EJB
-    UserBean userBean;
+    BenutzerBean userBean;
 
     @EJB
     ValidationBean validationBean;
@@ -54,14 +55,17 @@ public class TaskEditServlet extends HttpServlet {
 
         // Verfügbare Kategorien und Stati für die Suchfelder ermitteln
         request.setAttribute("categories", this.categoryBean.findAllSorted());
-        request.setAttribute("statuses", TaskStatus.values());
+        request.setAttribute("statuses", ArtDerAnzeige.values());
+        request.setAttribute("values", ArtDesPreises.values());
 
         // Zu bearbeitende Aufgabe einlesen
         HttpSession session = request.getSession();
 
-        Task task = this.getRequestedTask(request);
+        Anzeige task = this.getRequestedTask(request);
         request.setAttribute("edit", task.getId() != 0);
-                                
+        request.setAttribute("user", task.getBenutzer());
+        request.setAttribute("other_user", !userBean.getCurrentUser().getBenutzername().equals(task.getBenutzer().getBenutzername()));
+
         if (session.getAttribute("task_form") == null) {
             // Keine Formulardaten mit fehlerhaften Daten in der Session,
             // daher Formulardaten aus dem Datenbankobjekt übernehmen
@@ -112,51 +116,49 @@ public class TaskEditServlet extends HttpServlet {
         List<String> errors = new ArrayList<>();
 
         String taskCategory = request.getParameter("task_category");
-        String taskDueDate = request.getParameter("task_due_date");
-        String taskDueTime = request.getParameter("task_due_time");
         String taskStatus = request.getParameter("task_status");
         String taskShortText = request.getParameter("task_short_text");
         String taskLongText = request.getParameter("task_long_text");
+        String taskValue = request.getParameter("task_value");
+        String taskValueType = request.getParameter("task_value_type");
 
-        Task task = this.getRequestedTask(request);
+        Anzeige task = this.getRequestedTask(request);
 
         if (taskCategory != null && !taskCategory.trim().isEmpty()) {
             try {
-                task.setCategory(this.categoryBean.findById(Long.parseLong(taskCategory)));
+                task.setKategorie(this.categoryBean.findById(Long.parseLong(taskCategory)));
             } catch (NumberFormatException ex) {
                 // Ungültige oder keine ID mitgegeben
             }
         }
 
-        Date dueDate = WebUtils.parseDate(taskDueDate);
-        Time dueTime = WebUtils.parseTime(taskDueTime);
-
-        if (dueDate != null) {
-            task.setDueDate(dueDate);
-        } else {
-            errors.add("Das Datum muss dem Format dd.mm.yyyy entsprechen.");
+        try {
+            task.setArtDesPreises(ArtDesPreises.valueOf(taskValueType));
+        } catch (IllegalArgumentException ex) {
+            errors.add("Die ausgewählte Art des Preises ist nicht vorhanden.");
         }
-
-        if (dueTime != null) {
-            task.setDueTime(dueTime);
-        } else {
-            errors.add("Die Uhrzeit muss dem Format hh:mm:ss entsprechen.");
+        if (taskValue != null && !taskValue.trim().isEmpty()) {
+            try {
+                task.setPreisvorstellung(Integer.parseInt(taskValue));
+            } catch (NumberFormatException ex) {
+                // Ungültige oder keine ID mitgegeben
+            }
         }
 
         try {
-            task.setStatus(TaskStatus.valueOf(taskStatus));
+            task.setArt(ArtDerAnzeige.valueOf(taskStatus));
         } catch (IllegalArgumentException ex) {
-            errors.add("Der ausgewählte Status ist nicht vorhanden.");
+            errors.add("Die ausgewählte Art ist nicht vorhanden.");
         }
 
-        task.setShortText(taskShortText);
-        task.setLongText(taskLongText);
+        task.setTitel(taskShortText);
+        task.setBeschreibung(taskLongText);
 
         this.validationBean.validate(task, errors);
 
         // Datensatz speichern
         if (errors.isEmpty()) {
-            this.taskBean.update(task);
+            this.anzeigeBean.update(task);
         }
 
         // Weiter zur nächsten Seite
@@ -188,8 +190,8 @@ public class TaskEditServlet extends HttpServlet {
             throws ServletException, IOException {
 
         // Datensatz löschen
-        Task task = this.getRequestedTask(request);
-        this.taskBean.delete(task);
+        Anzeige task = this.getRequestedTask(request);
+        this.anzeigeBean.delete(task);
 
         // Zurück zur Übersicht
         response.sendRedirect(WebUtils.appUrl(request, "/app/tasks/"));
@@ -203,12 +205,14 @@ public class TaskEditServlet extends HttpServlet {
      * @param request HTTP-Anfrage
      * @return Zu bearbeitende Aufgabe
      */
-    private Task getRequestedTask(HttpServletRequest request) {
+    private Anzeige getRequestedTask(HttpServletRequest request) {
         // Zunächst davon ausgehen, dass ein neuer Satz angelegt werden soll
-        Task task = new Task();
-        task.setOwner(this.userBean.getCurrentUser());
-        task.setDueDate(new Date(System.currentTimeMillis()));
-        task.setDueTime(new Time(System.currentTimeMillis()));
+        Anzeige anzeige = new Anzeige();
+        anzeige.setBenutzer(this.userBean.getCurrentUser());
+        anzeige.setEinstellungsdatum(new Date(System.currentTimeMillis()));
+        anzeige.setEinstellungszeit(new Time(System.currentTimeMillis()));
+        anzeige.setArt(ArtDerAnzeige.BIETE);
+        anzeige.setArtDesPreises(ArtDesPreises.FESTPREIS);
 
         // ID aus der URL herausschneiden
         String taskId = request.getPathInfo();
@@ -225,12 +229,12 @@ public class TaskEditServlet extends HttpServlet {
 
         // Versuchen, den Datensatz mit der übergebenen ID zu finden
         try {
-            task = this.taskBean.findById(Long.parseLong(taskId));
+            anzeige = this.anzeigeBean.findById(Long.parseLong(taskId));
         } catch (NumberFormatException ex) {
             // Ungültige oder keine ID in der URL enthalten
         }
 
-        return task;
+        return anzeige;
     }
 
     /**
@@ -243,37 +247,45 @@ public class TaskEditServlet extends HttpServlet {
      * @param task Die zu bearbeitende Aufgabe
      * @return Neues, gefülltes FormValues-Objekt
      */
-    private FormValues createTaskForm(Task task) {
+    private FormValues createTaskForm(Anzeige task) {
         Map<String, String[]> values = new HashMap<>();
 
         values.put("task_owner", new String[]{
-            task.getOwner().getUsername()
+            task.getBenutzer().getBenutzername()
         });
 
-        if (task.getCategory() != null) {
+        if (task.getKategorie() != null) {
             values.put("task_category", new String[]{
-                task.getCategory().toString()
+                task.getKategorie().toString()
             });
         }
 
-        values.put("task_due_date", new String[]{
-            WebUtils.formatDate(task.getDueDate())
+        values.put("task_date", new String[]{
+            WebUtils.formatDate(task.getEinstellungsdatum())
         });
 
-        values.put("task_due_time", new String[]{
-            WebUtils.formatTime(task.getDueTime())
+        values.put("task_time", new String[]{
+            WebUtils.formatTime(task.getEinstellungszeit())
         });
 
         values.put("task_status", new String[]{
-            task.getStatus().toString()
+            task.getArt().toString()
         });
 
         values.put("task_short_text", new String[]{
-            task.getShortText()
+            task.getTitel()
         });
 
         values.put("task_long_text", new String[]{
-            task.getLongText()
+            task.getBeschreibung()
+        });
+
+        values.put("task_value_type", new String[]{
+            task.getArtDesPreises() + ""
+        });
+
+        values.put("task_value", new String[]{
+            task.getPreisvorstellung() + ""
         });
 
         FormValues formValues = new FormValues();

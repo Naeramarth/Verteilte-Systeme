@@ -9,6 +9,7 @@
  */
 package beans;
 
+import entities.Anzeige;
 import entities.Benutzer;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
@@ -21,13 +22,17 @@ import javax.persistence.PersistenceContext;
  * Spezielle EJB zum Anlegen eines Benutzers und Aktualisierung des Passworts.
  */
 @Stateless
-public class BenutzerBean {
+public class BenutzerBean extends EntityBean<Benutzer, String> {
 
     @PersistenceContext
     EntityManager em;
-    
+
     @Resource
     EJBContext ctx;
+
+    public BenutzerBean() {
+        super(Benutzer.class);
+    }
 
     /**
      * Gibt das Datenbankobjekt des aktuell eingeloggten Benutzers zurück,
@@ -44,18 +49,41 @@ public class BenutzerBean {
      * @param password
      * @throws BenutzerBean.UserAlreadyExistsException
      */
-    public void signup(String username, String password) throws UserAlreadyExistsException {
-        if (em.find(Benutzer.class, username) != null) {
-            throw new UserAlreadyExistsException("Der Benutzername $B ist bereits vergeben.".replace("$B", username));
+    public void signup(String benutzername, String password, String vorname, String nachname, String strasse, String hausnummer, String postleitzahl, String ort, String land, String eMail, String telefonnummer) throws UserAlreadyExistsException {
+        if (em.find(Benutzer.class, benutzername) != null) {
+            throw new UserAlreadyExistsException("Der Benutzername $B ist bereits vergeben.".replace("$B", benutzername));
         }
 
-        Benutzer user = new Benutzer(username, password);
+        Benutzer user = new Benutzer(benutzername, password, vorname, nachname, strasse, hausnummer, postleitzahl, ort, land, eMail, telefonnummer);
         user.addToGroup("portfolio-user");
         em.persist(user);
     }
 
+    public void changeData(String benutzername, String password, String oldPassword, String vorname, String nachname, String strasse, String hausnummer, String postleitzahl, String ort, String land, String eMail, String telefonnummer) throws InvalidCredentialsException {
+
+        Benutzer user = findById(benutzername);
+        user.setVorname(vorname);
+        user.setNachname(nachname);
+        user.setStrasse(strasse);
+        user.setHausnummer(hausnummer);
+        user.setPostleitzahl(postleitzahl);
+        user.setOrt(ort);
+        user.setLand(land);
+        user.setEmail(eMail);
+        user.setTelefonnummer(telefonnummer);
+        if (!user.checkPassword(oldPassword)) {
+            throw new InvalidCredentialsException("Passwort ist falsch.");
+        }
+        if (password != null) {
+            user.setPassword(password);
+        }
+        user.addToGroup("portfolio-user");
+        update(user);
+    }
+
     /**
      * Passwort ändern (ohne zu speichern)
+     *
      * @param user
      * @param oldPassword
      * @param newPassword
@@ -69,18 +97,20 @@ public class BenutzerBean {
 
         user.setPassword(newPassword);
     }
-    
+
     /**
      * Benutzer löschen
+     *
      * @param user Zu löschender Benutzer
      */
     @RolesAllowed("portfolio-user")
     public void delete(Benutzer user) {
         this.em.remove(user);
     }
-    
+
     /**
      * Benutzer aktualisieren
+     *
      * @param user Zu aktualisierender Benutzer
      * @return Gespeicherter Benutzer
      */

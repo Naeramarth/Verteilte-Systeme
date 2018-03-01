@@ -11,10 +11,15 @@ package web;
 
 import beans.BenutzerBean;
 import beans.ValidationBean;
+import entities.Anzeige;
 import entities.Benutzer;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -29,8 +34,8 @@ import org.apache.commons.validator.routines.EmailValidator;
  * Servlet für die Registrierungsseite. Hier kann sich ein neuer Benutzer
  * registrieren. Anschließend wird der auf die Startseite weitergeleitet.
  */
-@WebServlet(urlPatterns = {"/signup/"})
-public class SignUpServlet extends HttpServlet {
+@WebServlet(urlPatterns = {"/app/edit_user/"})
+public class EditUserServlet extends HttpServlet {
 
     @EJB
     ValidationBean validationBean;
@@ -41,8 +46,13 @@ public class SignUpServlet extends HttpServlet {
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.setAttribute("edit", false);
+        request.setAttribute("edit", true);
 
+        if (request.getSession().getAttribute("signup_form") == null) {
+            // Keine Formulardaten mit fehlerhaften Daten in der Session,
+            // daher Formulardaten aus dem Datenbankobjekt übernehmen
+            request.setAttribute("signup_form", this.createUserForm());
+        }
         // Anfrage an dazugerhörige JSP weiterleiten
         RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/login/signup.jsp");
         dispatcher.forward(request, response);
@@ -61,6 +71,7 @@ public class SignUpServlet extends HttpServlet {
         List<String> error = new ArrayList<>();
 
         String username = request.getParameter("signup_username");
+        String oldpassword = request.getParameter("signup_oldpassword");
         String password1 = request.getParameter("signup_password1");
         String password2 = request.getParameter("signup_password2");
         String name = request.getParameter("signup_name");
@@ -99,13 +110,21 @@ public class SignUpServlet extends HttpServlet {
         }
         String telefonnummer = request.getParameter("signup_telefonnummer");
 
-        // Eingaben prüfen
+        // Eingaben prüfenBenutzer user
+        List<String> errors = new ArrayList<>();
         Benutzer user = new Benutzer(username, password1, vorname, nachname, strasse, hausnummer, postleitzahl, ort, land, eMail, telefonnummer);
-        List<String> errors = this.validationBean.validate(user);
+
+        if (password1 == null || password1.equals("")) {
+            password1 = null;
+        } else {
+            errors.addAll(this.validationBean.validate(user));
+        }
         if (!error.equals("")) {
             errors.addAll(error);
         }
-        this.validationBean.validate(user.getPasswort(), errors);
+        if (password1 != null) {
+            this.validationBean.validate(user.getPasswort(), errors);
+        }
 
         if (password1 != null && password2 != null && !password1.equals(password2)) {
             errors.add("Die beiden Passwörter stimmen nicht überein.");
@@ -114,8 +133,8 @@ public class SignUpServlet extends HttpServlet {
         // Neuen Benutzer anlegen
         if (errors.isEmpty()) {
             try {
-                this.userBean.signup(username, password1, vorname, nachname, strasse, hausnummer, postleitzahl, ort, land, eMail, telefonnummer);
-            } catch (BenutzerBean.UserAlreadyExistsException ex) {
+                this.userBean.changeData(username, password1, oldpassword, vorname, nachname, strasse, hausnummer, postleitzahl, ort, land, eMail, telefonnummer);
+            } catch (BenutzerBean.InvalidCredentialsException ex) {
                 errors.add(ex.getMessage());
             }
         }
@@ -123,7 +142,6 @@ public class SignUpServlet extends HttpServlet {
         // Weiter zur nächsten Seite
         if (errors.isEmpty()) {
             // Keine Fehler: Startseite aufrufen
-            request.login(username, password1);
             response.sendRedirect(WebUtils.appUrl(request, "/app/tasks/"));
         } else {
             // Fehler: Formuler erneut anzeigen
@@ -136,6 +154,40 @@ public class SignUpServlet extends HttpServlet {
 
             response.sendRedirect(request.getRequestURI());
         }
+    }
+
+    private FormValues createUserForm() {
+        Benutzer currentUser = userBean.getCurrentUser();
+        Map<String, String[]> values = new HashMap<>();
+
+        values.put("signup_username", new String[]{
+            currentUser.getBenutzername()
+        });
+
+        values.put("signup_name", new String[]{currentUser.getVorname() + " " + currentUser.getNachname()
+        });
+
+        values.put("signup_strasse", new String[]{currentUser.getStrasse() + " " + currentUser.getHausnummer()
+        });
+
+        values.put("signup_postleitzahl", new String[]{currentUser.getPostleitzahl()
+        });
+
+        values.put("signup_ort", new String[]{currentUser.getOrt()
+        });
+
+        values.put("signup_land", new String[]{currentUser.getLand()
+        });
+
+        values.put("signup_eMail", new String[]{currentUser.getEmail()
+        });
+
+        values.put("signup_telefonnummer", new String[]{currentUser.getTelefonnummer()
+        });
+
+        FormValues formValues = new FormValues();
+        formValues.setValues(values);
+        return formValues;
     }
 
 }

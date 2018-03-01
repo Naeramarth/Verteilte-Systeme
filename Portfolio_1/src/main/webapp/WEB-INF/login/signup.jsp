@@ -26,7 +26,14 @@
 
     <jsp:attribute name="menu">
         <div class="menuitem">
-            <a href="<c:url value="/logout/"/>">Einloggen</a>
+            <c:choose>
+                <c:when test="${edit}">
+                    <a href="<c:url value="/app/tasks/"/>">Übersicht</a>
+                </c:when>
+                <c:otherwise>
+                    <a href="<c:url value="/logout/"/>">Einloggen</a>
+                </c:otherwise>
+            </c:choose>
         </div>
     </jsp:attribute>
 
@@ -36,46 +43,144 @@
                 <div class="column">
                     <%-- CSRF-Token --%>
                     <input type="hidden" name="csrf_token" value="${csrf_token}">
+                    <input type="hidden" name="edit" value="${edit}">
 
                     <%-- Eingabefelder --%>
-                    <label for="signup_username">
-                        Benutzername:
+                    <c:choose>
+                        <c:when test="${edit}">
+                            <h1>Passwort ändern</h1>
+                            <label for="signup_username">
+                                Benutzername:
+                                <span class="required">*</span>
+                            </label>
+                            <div class="side-by-side">
+                                <input type="text" name="signup_username" value="${signup_form.values["signup_username"][0]}" readonly = "readonly">
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <h1>Logindaten</h1>
+                            <label for="signup_username">
+                                Benutzername:
+                                <span class="required">*</span>
+                            </label>
+                            <div class="side-by-side">
+                                <input type="text" name="signup_username" value="${signup_form.values["signup_username"][0]}">
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+
+                    <c:choose>
+                        <c:when test="${edit}">
+                            <label for="signup_password1">
+                                Passwort:
+                            </label>
+                            <div class="side-by-side">
+                                <input type="password" name="signup_password1">
+                            </div>
+
+                            <label for="signup_password2">
+                                Passwort (wdh.):
+                            </label>
+                            <div class="side-by-side">
+                                <input type="password" name="signup_password2">
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <label for="signup_password1">
+                                Passwort:
+                                <span class="required">*</span>
+                            </label>
+                            <div class="side-by-side">
+                                <input type="password" name="signup_password1">
+                            </div>
+
+                            <label for="signup_password2">
+                                Passwort (wdh.):
+                                <span class="required">*</span>
+                            </label>
+                            <div class="side-by-side">
+                                <input type="password" name="signup_password2">
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+
+                    <h1>Anschrift</h1>
+
+                    <label for="signup_name">
+                        Vor- und Nachname: 
                         <span class="required">*</span>
                     </label>
                     <div class="side-by-side">
-                        <input type="text" name="signup_username" value="${signup_form.values["signup_username"][0]}">
+                        <input type="text" name="signup_name" value="${signup_form.values["signup_name"][0]}">
                     </div>
 
-                    <label for="signup_password1">
-                        Passwort:
+                    <label for="signup_strasse">
+                        Straße und Hausnummer: 
                         <span class="required">*</span>
                     </label>
                     <div class="side-by-side">
-                        <input type="password" name="signup_password1" value="${signup_form.values["signup_password1"][0]}">
+                        <input type="text" name="signup_strasse" value="${signup_form.values["signup_strasse"][0]}">
                     </div>
 
-                    <label for="signup_password2">
-                        Passwort (wdh.):
+                    <label for="signup_plzort">
+                        Postleitzahl und Ort: 
                         <span class="required">*</span>
                     </label>
                     <div class="side-by-side">
-                        <input type="password" name="signup_password2" value="${signup_form.values["signup_password2"][0]}">
-                    </div>
-                    
-                    <label for="signup_vorname">
-                        Vorname: 
-                        <span class="required">*</span>
-                    </label>
-                    <div class="side-by-side">
-                        <input type="text" name="signup_vorname" value="${signup_form.values["signup_vorname"][0]}">
+                        <input type="text" name="signup_postleitzahl" value="${signup_form.values["signup_postleitzahl"][0]}">
+                        <input type="text" name="signup_ort" value="${signup_form.values["signup_ort"][0]}">
                     </div>
 
-                    <%-- Button zum Abschicken --%>
+                    <label for="signup_land">
+                        Land: 
+                        <span class="required">*</span>
+                    </label>
                     <div class="side-by-side">
-                        <button class="icon-pencil" type="submit">
-                            Registrieren
-                        </button>
+                        <input type="text" name="signup_land" value="${signup_form.values["signup_land"][0]}">
                     </div>
+
+                    <h1>Kontaktdaten</h1>
+
+                    <label for="signup_eMail">
+                        E-Mail: 
+                        <span class="required">*</span>
+                    </label>
+                    <div class="side-by-side">
+                        <input type="text" name="signup_eMail" value="${signup_form.values["signup_eMail"][0]}">
+                    </div>
+
+                    <label for="signup_telefonnummer">
+                        Telefonnummer: 
+                        <span class="required">*</span>
+                    </label>
+                    <div class="side-by-side">
+                        <input type="text" name="signup_telefonnummer" value="${signup_form.values["signup_telefonnummer"][0]}">
+                    </div>
+                    <c:choose>
+                        <c:when test="${edit}">
+                            <label for="signup_oldpassword">
+                                Änderungen mit Passwort bestätigen
+                                <span class="required">*</span>
+                            </label>
+                            <div class="side-by-side">
+                                <input type="password" name="signup_oldpassword">
+                            </div>
+                            <%-- Button zum Abschicken --%>
+                            <div class="side-by-side">
+                                <button class="icon-pencil" type="submit">
+                                    Änderungen speichern
+                                </button>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <%-- Button zum Abschicken --%>
+                            <div class="side-by-side">
+                                <button class="icon-pencil" type="submit">
+                                    Registrieren
+                                </button>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
 
                 <%-- Fehlermeldungen --%>

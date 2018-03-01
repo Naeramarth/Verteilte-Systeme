@@ -9,7 +9,7 @@
  */
 package beans;
 
-import entities.Category;
+import entities.Kategorie;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
@@ -18,11 +18,11 @@ import javax.ejb.Stateless;
  * Einfache EJB mit den üblichen CRUD-Methoden für Kategorien.
  */
 @Stateless
-@RolesAllowed("todo-app-user")
-public class CategoryBean extends EntityBean<Category, Long> {
+@RolesAllowed("portfolio-user")
+public class KategorieBean extends EntityBean<Kategorie, Long> {
 
-    public CategoryBean() {
-        super(Category.class);
+    public KategorieBean() {
+        super(Kategorie.class);
     }
 
     /**
@@ -30,7 +30,7 @@ public class CategoryBean extends EntityBean<Category, Long> {
      *
      * @return Liste mit allen Kategorien
      */
-    public List<Category> findAllSorted() {
-        return this.em.createQuery("SELECT c FROM Category c ORDER BY c.name").getResultList();
+    public List<Kategorie> findAllSorted() {
+        return this.em.createQuery("SELECT c FROM Kategorie c ORDER BY c.name").getResultList();
     }
 }

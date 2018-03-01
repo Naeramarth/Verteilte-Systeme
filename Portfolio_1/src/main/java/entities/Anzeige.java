@@ -6,10 +6,14 @@
 package entities;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.sql.Time;
+import java.sql.Date;
 import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -17,7 +21,11 @@ import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.TableGenerator;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  *
@@ -25,36 +33,47 @@ import lombok.Data;
  */
 @Entity
 @Data
-class Anzeige implements Serializable {
+@EqualsAndHashCode(exclude = {"benutzer", "list_benutzer", "kategorie"})
+public class Anzeige implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(generator = "anzeige_ids")
+    @TableGenerator(name = "anzeige_ids", initialValue = 0, allocationSize = 50)
     private long id;
 
+    @Enumerated(EnumType.STRING)
+    @NotNull
     private ArtDerAnzeige art;
+    
+    @Size(min = 1, max = 64, message = "Der Titel darf nicht leer sein.")
+    @NotNull(message = "Der Titel darf nicht leer sein.")
     private String titel;
     
     @Lob
     private String beschreibung;
+    
+    @NotNull(message = "Das Datum darf nicht leer sein.")
     private Date einstellungsdatum;
-    private Date erstellungsdatum;
+    
+    @NotNull(message = "Die Zeit darf nicht leer sein.")
+    private Time einstellungszeit;
     
     @Column(scale = 2)
     private long preisvorstellung;
-    private ArtDesPreises artDesPreises;
-    private int postleitzahl;
-    private String ort;
     
-    @ManyToOne
+    @Enumerated(EnumType.STRING)
+    @NotNull
+    private ArtDesPreises artDesPreises;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @NotNull(message = "Die Anzeige muss einem Benutzer zugeordnet werden.")
     private Benutzer benutzer;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     private List<Benutzer> list_benutzer;
     
-    @OneToMany(mappedBy = "anzeige")
-    private List<Foto> fotos;
-    
-    @ManyToMany
-    private List<Kategorie> kategorien;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Kategorie kategorie;
 }
