@@ -70,9 +70,6 @@ public class Anzeige implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @NotNull(message = "Die Anzeige muss einem Benutzer zugeordnet werden.")
     private Benutzer benutzer;
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    private List<Benutzer> list_benutzer;
     
     @ManyToOne(fetch = FetchType.LAZY)
     private Kategorie kategorie;

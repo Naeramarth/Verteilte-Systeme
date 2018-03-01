@@ -103,9 +103,6 @@ public class Benutzer implements Serializable {
     @OneToMany(mappedBy = "benutzer", fetch = FetchType.LAZY)
     private List<Anzeige> anzeige;
 
-    @ManyToMany(mappedBy = "list_benutzer", fetch = FetchType.LAZY)
-    private List<Anzeige> anzeigen;
-
     public Benutzer() {
     }
 
